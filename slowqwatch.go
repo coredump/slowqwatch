@@ -18,7 +18,7 @@ var (
 func init() {
 	flag.StringVar(&path, "l", "", "Path to the MySQL slow query log")
 	flag.StringVar(&statsd_host, "h", "localhost:8125", "Hostname:port for statsd")
-	flag.StringVar(&prefix, "m", "mysql.queries.slow", "Path prefix for the metric to be recorded")
+	flag.StringVar(&prefix, "m", "mysql.queries", "Path prefix for the metric to be recorded")
 }
 
 func main() {
@@ -58,7 +58,7 @@ func main() {
 
 	for line := range t.Lines {
 		if r.MatchString(line.Text) {
-			_ = conn.Inc("count", 1, 1.0)
+			_ = conn.Inc("slow", 1, 1.0)
 		}
 	}
 }
