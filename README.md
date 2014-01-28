@@ -1,4 +1,4 @@
-# Watch a log and set to statsd!
+# Watch a log and send to statsd!
 
 This is a very simple tool that will watch a log and increase a StatsD metric when a line matches the specified regex.
 
