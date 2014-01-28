@@ -12,13 +12,15 @@ import (
 var (
 	path        string
 	statsd_host string
-	prefix      string
+	metric      string
+	regex       string
 )
 
 func init() {
-	flag.StringVar(&path, "l", "", "Path to the MySQL slow query log")
 	flag.StringVar(&statsd_host, "h", "localhost:8125", "Hostname:port for statsd")
-	flag.StringVar(&prefix, "m", "mysql.queries", "Path prefix for the metric to be recorded")
+	flag.StringVar(&path, "l", "", "Path to log to be watched")
+	flag.StringVar(&metric, "m", "mysql.queries.slow", "Metric to be increased")
+	flag.StringVar(&regex, "r", "^# Query_time:\\s+(?P<query_time>\\S+)\\s+Lock_time:\\s+(?P<lock_time>\\S+).+", "Regex to be matched on the log")
 }
 
 func main() {
@@ -47,18 +49,18 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Could not tail: %v\n", err)
 	}
 
-	conn, err := statsd.New(statsd_host, prefix)
+	conn, err := statsd.New(statsd_host, "")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to connect to statsd: %v\n", err)
 		os.Exit(10)
 	}
 	defer conn.Close()
 
-	r, _ := regexp.Compile(`^# Query_time:\s+(?P<query_time>\S+)\s+Lock_time:\s+(?P<lock_time>\S+).+`)
+	r := regexp.MustCompile(regex)
 
 	for line := range t.Lines {
 		if r.MatchString(line.Text) {
-			_ = conn.Inc("slow", 1, 1.0)
+			_ = conn.Inc(metric, 1, 1.0)
 		}
 	}
 }
